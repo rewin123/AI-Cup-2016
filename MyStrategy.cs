@@ -1964,9 +1964,9 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
 
             forests = new Triangle[4];
             Triangle tri = new Triangle();
-            tri.p1 = new Vector(400, w.Height - 800);
-            tri.p2 = new Vector(400, 800);
-            tri.p3 = new Vector(1600, 2000);
+            tri.p1 = new Vector(500, w.Height - 1000);
+            tri.p2 = new Vector(500, 1000);
+            tri.p3 = new Vector(1600, 1900);
             forests[0] = tri;
 
              tri = new Triangle();
@@ -1976,15 +1976,15 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
             forests[1] = tri;
 
              tri = new Triangle();
-            tri.p1 = new Vector(800, 400);
-            tri.p2 = new Vector(3200, 400);
-            tri.p3 = new Vector(2000, 1600);
+            tri.p1 = new Vector(1000, 500);
+            tri.p2 = new Vector(3000, 500);
+            tri.p3 = new Vector(2000, 1500);
             forests[2] = tri;
 
              tri = new Triangle();
-            tri.p1 = new Vector(3600, 800);
-            tri.p2 = new Vector(3600, 3200);
-            tri.p3 = new Vector(2400, 2000);
+            tri.p1 = new Vector(3500, 1000);
+            tri.p2 = new Vector(3500, 3000);
+            tri.p3 = new Vector(2500, 2000);
             forests[3] = tri;
         }
 
