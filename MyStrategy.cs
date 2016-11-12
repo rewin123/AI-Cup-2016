@@ -1874,6 +1874,7 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
         public World w;
         public double Width;
         public double Height;
+        public Triangle[] forests;
         public MyWorld(World w, Wizard self)
         {
             Width = w.Width;
@@ -1960,6 +1961,31 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                     collidebox[x, y].Add(tree);
                 }
             }
+
+            forests = new Triangle[4];
+            Triangle tri = new Triangle();
+            tri.p1 = new Vector(400, w.Height - 800);
+            tri.p2 = new Vector(400, 800);
+            tri.p3 = new Vector(1600, 2000);
+            forests[0] = tri;
+
+             tri = new Triangle();
+            tri.p1 = new Vector(1000, w.Height - 500);
+            tri.p2 = new Vector(3000, w.Height - 500);
+            tri.p3 = new Vector(2000, 2500);
+            forests[1] = tri;
+
+             tri = new Triangle();
+            tri.p1 = new Vector(800, 400);
+            tri.p2 = new Vector(3200, 400);
+            tri.p3 = new Vector(2000, 1600);
+            forests[2] = tri;
+
+             tri = new Triangle();
+            tri.p1 = new Vector(3600, 800);
+            tri.p2 = new Vector(3600, 3200);
+            tri.p3 = new Vector(2400, 2000);
+            forests[3] = tri;
         }
 
         public void MakeMove(Move m, int steps)
@@ -2335,7 +2361,10 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                     mywizard.RemainingCooldownTicksByAction[k] = 0;
             }
         }
-
+        //шаблон треугольника дерева
+        //1 2
+        //1 8
+        //4 5
         public bool TestCollide(MyCircularUnit unit)
         {
             Vector npos = unit.pos;
@@ -2344,22 +2373,26 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
             int ycol = (int)(npos.y / cstep);
             if (npos.x <= unit.radius)
             {
-                collide = true;
+                return true;
             }
             else if (npos.x >= w.Width - unit.radius)
             {
-                collide = true;
+                return true;
             }
             if (npos.y <= unit.radius)
             {
-                collide = true;
+                return true;
             }
             else if (npos.y >= w.Height - unit.radius)
             {
-                collide = true;
-            }
-            if (collide)
                 return true;
+            }
+
+            for(int i = 0;i < forests.Length;i++)
+            {
+                if (forests[i].Include(unit.pos))
+                    return true;
+            }
 
             List<MyCircularUnit> cols;
 
@@ -2475,6 +2508,80 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
             if (Vector.Distance(u1.pos, u2.pos) <= (u1.radius + u2.radius))
                 return true;
             else return false;
+        }
+    }
+
+    class Triangle
+    {
+        public Vector p1;
+        public Vector p2;
+        public Vector p3;
+
+        public bool Include(Vector pos)
+        {
+            double edist = LineDist(p1, p2, p3);
+            double dist = LineDist(p1, p2, pos);
+            if (Math.Sign(edist) != Math.Sign(dist))
+                return false;
+            if (Math.Abs(edist) < Math.Abs(dist))
+                return false;
+
+             edist = LineDist(p2, p3, p1);
+             dist = LineDist(p2, p3, pos);
+            if (Math.Sign(edist) != Math.Sign(dist))
+                return false;
+            if (Math.Abs(edist) < Math.Abs(dist))
+                return false;
+
+             edist = LineDist(p3, p1, p2);
+             dist = LineDist(p3, p1, pos);
+            if (Math.Sign(edist) != Math.Sign(dist))
+                return false;
+            if (Math.Abs(edist) < Math.Abs(dist))
+                return false;
+
+            return true;
+        }
+
+        double LineDist(Vector p1, Vector p2, Vector target)
+        {
+            //x = at + b
+            //y = ct + d
+            //r^2 = (x - x0)^2 + (y - y0)^2
+            //dr/dt = 0 = 2(at + b - x0) * a + 2(ct + d - y0)*c
+            //t = (x0a + y0c - ba - cd)/(a^2 + b^2)
+            //fx + gy - h = 0
+            //f(at + b) + g(ct+d) - h = 0
+            //fa + gc = 0
+            //fb + gd - h = 0
+            //f = -gc/a
+            //h = g(d - bc/a)
+            Vector dt = p2 - p1;
+            dt.Normalize();
+            double t = ((target.x - p1.x) * dt.x + (target.y - p1.y) * dt.y) / (dt.x * dt.x + dt.y * dt.y);
+            if(Math.Abs(dt.x) < 1e-4)
+            {
+                double f = 1;
+                double g = 0;
+                double h = p1.x * f;
+
+                return f * target.x - h;
+            }
+            else if(Math.Abs(dt.y) < 1e-4)
+            {
+                double f = 0;
+                double g = 1;
+                double h = p1.y * g;
+                return g * target.y - h;
+            }
+            else
+            {
+                double g = 1;
+                double f = -dt.y / dt.x * g;
+                double h = g * (p1.y - p1.x * f);
+
+                return f * target.x + g * target.y - h;
+            }
         }
     }
 
