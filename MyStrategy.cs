@@ -50,11 +50,11 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
         }
         public void Move(Wizard self, World world, Game game, Move move) {
             myline = LaneType.Top;
-            if (world.TickIndex < 400)
+            if (world.TickIndex < 420)
             {
                 return;
             }
-            else if (world.TickIndex == 400)
+            else if (world.TickIndex == 420)
             {
                 if (self.Faction == Faction.Academy)
                     enemyFaction = Faction.Renegades;
@@ -402,12 +402,11 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
 
                 absmove = new AbstractMove();
                 absmove.type = AbstractMoveType.GoTo;
-                absmove.target = attackpath[3];
 
                 MyCircularUnit unit = new MyCircularUnit(self);
                 //unit.radius += 2;
                 path = FindPath(new Vector(self.X, self.Y), attackpath[2], new MyWorld(world, self), 12, unit);
-                absmove.target = attackpath[3];
+                absmove.target = attackpath[2];
                 absmove.type = AbstractMoveType.GoTo;
                 absmove.changeWithEnemiesInCastRange = true;
                 absmove.nextType = AbstractMoveType.StendUp;
@@ -737,6 +736,8 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
             }
             else return false;
         }
+
+        
 
         bool FollowPath(Vector[] path, ref int pos, Wizard self, World world, Game game, Move move)
         {
@@ -1399,6 +1400,7 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
             int dxsteps = xsteps - 1;
             int dysteps = ysteps - 1;
             int interacions = 0;
+            Vector ppos = new Vector();
             do
             {
                 interacions = 0;
@@ -1410,7 +1412,156 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                     { 
                         if(stage == waveMap[x,y])
                         {
+                            unit.pos.x = x * step + dx;
+                            unit.pos.y = y * step + dy;
                             if(x > 0)
+                            {
+                                if (waveMap[x - 1, y] == 0)
+                                {
+                                    ppos.x = (x - 1) * step + dx;
+                                    ppos.y = y * step + dy;
+                                    if (!world.TestMoveCollide(unit,ppos))
+                                    {
+                                        interacions++;
+                                        waveMap[x - 1, y] = stage2;
+                                    }
+                                }
+                            }
+                            if (x < dxsteps)
+                            {
+                                if (waveMap[x + 1, y] == 0)
+                                {
+                                    ppos.x = (x + 1) * step + dx;
+                                    ppos.y = y * step + dy;
+                                    if (!world.TestMoveCollide(unit, ppos))
+                                    {
+                                        interacions++;
+                                        waveMap[x + 1, y] = stage2;
+                                    }
+                                }
+                            }
+
+                            if (y > 0)
+                            {
+                                if (waveMap[x, y - 1] == 0)
+                                {
+                                    ppos.x = x * step + dx;
+                                    ppos.y = (y - 1) * step + dy;
+                                    if (!world.TestMoveCollide(unit, ppos))
+                                    {
+                                        interacions++;
+                                        waveMap[x, y - 1] = stage2;
+                                    }
+                                    else
+                                    {
+                                        ;
+                                    }
+                                }
+                            }
+                            if (y < dysteps)
+                            {
+                                if (waveMap[x, y + 1] == 0)
+                                {
+                                    ppos.x = x * step + dx;
+                                    ppos.y = (y + 1) * step + dy;
+                                    if (!world.TestMoveCollide(unit, ppos))
+                                    {
+                                        interacions++;
+                                        waveMap[x, y + 1] = stage2;
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                }
+                stage = stage2;
+            } while (waveMap[xend, yend] == 0 && interacions > 0);
+            if(interacions == 0)
+            {
+                return new Vector[] { to };
+            }
+
+            Vector[] path = new Vector[waveMap[xend, yend]];
+            if(path.Length == 1)
+            {
+                path[0] = new Vector(xend * step + dx, yend * step + dy);
+                return path;
+            }
+            int xnow = xend;
+            int ynow = yend;
+            do
+            {
+                int dval = waveMap[xnow,ynow] - 1;
+                path[dval] = new Vector(xnow * step + dx, ynow * step + dy);
+                if(xnow > 0)
+                {
+                    if(waveMap[xnow - 1,ynow] == dval)
+                    {
+                        xnow--;
+                        continue;
+                    }
+                }
+                if(xnow < dxsteps)
+                {
+                    if(waveMap[xnow + 1,ynow] == dval)
+                    {
+                        xnow++;
+                        continue;
+                    }
+                }
+                if (ynow > 0)
+                {
+                    if (waveMap[xnow, ynow - 1] == dval)
+                    {
+                        ynow--;
+                        continue;
+                    }
+                }
+                if (ynow < dysteps)
+                {
+                    if (waveMap[xnow, ynow + 1] == dval)
+                    {
+                        ynow++;
+                        continue;
+                    }
+                }
+            } while (xnow != xstart || ynow != ystart);
+            path[0] = new Vector(xstart * step + dx, ystart * step + dy);
+
+            return path;
+        }
+
+        Vector[] FindPathDir(Vector from, Vector to, MyWorld world, double step, MyCircularUnit unit, double angle)
+        {
+            Vector xvector = new Vector(Math.Cos(angle), Math.Sin(angle));
+            Vector yvector = new Vector(-Math.Sin(angle), Math.Cos(angle));
+            int xsteps = (int)(world.Width / step) + 1;
+            int ysteps = (int)(world.Height / step) + 1;
+            int[,] waveMap = new int[xsteps, ysteps];
+            int xstart = (int)(from.x / step);
+            int ystart = (int)(from.y / step);
+            double dx = from.x - xstart * step;
+            double dy = from.y - ystart * step;
+            int xend = (int)(to.x / step);
+            int yend = (int)(to.y / step);
+            waveMap[xstart, ystart] = 1;
+            int stage = 1;
+            int dxsteps = xsteps - 1;
+            int dysteps = ysteps - 1;
+            int interacions = 0;
+            do
+            {
+                interacions = 0;
+                world.MakeMove(new Move(), (int)(step / 3));
+                int stage2 = stage + 1;
+                for (int x = 0; x < xsteps; x++)
+                {
+                    for (int y = 0; y < ysteps; y++)
+                    {
+                        if (stage == waveMap[x, y])
+                        {
+                            if (x > 0)
                             {
                                 if (waveMap[x - 1, y] == 0)
                                 {
@@ -1473,13 +1624,13 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                 }
                 stage = stage2;
             } while (waveMap[xend, yend] == 0 && interacions > 0);
-            if(interacions == 0)
+            if (interacions == 0)
             {
                 return new Vector[] { to };
             }
 
             Vector[] path = new Vector[waveMap[xend, yend]];
-            if(path.Length == 1)
+            if (path.Length == 1)
             {
                 path[0] = new Vector(xend * step + dx, yend * step + dy);
                 return path;
@@ -1488,19 +1639,19 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
             int ynow = yend;
             do
             {
-                int dval = waveMap[xnow,ynow] - 1;
+                int dval = waveMap[xnow, ynow] - 1;
                 path[dval] = new Vector(xnow * step + dx, ynow * step + dy);
-                if(xnow > 0)
+                if (xnow > 0)
                 {
-                    if(waveMap[xnow - 1,ynow] == dval)
+                    if (waveMap[xnow - 1, ynow] == dval)
                     {
                         xnow--;
                         continue;
                     }
                 }
-                if(xnow < dxsteps)
+                if (xnow < dxsteps)
                 {
-                    if(waveMap[xnow + 1,ynow] == dval)
+                    if (waveMap[xnow + 1, ynow] == dval)
                     {
                         xnow++;
                         continue;
@@ -1875,6 +2026,7 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
         public double Width;
         public double Height;
         public Triangle[] forests;
+        public bool[,] forestarray;
         public MyWorld(World w, Wizard self)
         {
             Width = w.Width;
@@ -1962,30 +2114,44 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                 }
             }
 
-            forests = new Triangle[4];
-            Triangle tri = new Triangle();
-            tri.p1 = new Vector(500, w.Height - 1000);
-            tri.p2 = new Vector(500, 1000);
-            tri.p3 = new Vector(1600, 1900);
-            forests[0] = tri;
+            //forests = new Triangle[4];
+            //Triangle tri = new Triangle();
+            //tri.p1 = new Vector(500, w.Height - 1000);
+            //tri.p2 = new Vector(500, 1000);
+            //tri.p3 = new Vector(1600, 1900);
+            //forests[0] = tri;
 
-             tri = new Triangle();
-            tri.p1 = new Vector(1000, w.Height - 500);
-            tri.p2 = new Vector(3000, w.Height - 500);
-            tri.p3 = new Vector(2000, 2500);
-            forests[1] = tri;
+            // tri = new Triangle();
+            //tri.p1 = new Vector(1000, w.Height - 500);
+            //tri.p2 = new Vector(3000, w.Height - 500);
+            //tri.p3 = new Vector(2000, 2500);
+            //forests[1] = tri;
 
-             tri = new Triangle();
-            tri.p1 = new Vector(1000, 500);
-            tri.p2 = new Vector(3000, 500);
-            tri.p3 = new Vector(2000, 1500);
-            forests[2] = tri;
+            // tri = new Triangle();
+            //tri.p1 = new Vector(1000, 500);
+            //tri.p2 = new Vector(3000, 500);
+            //tri.p3 = new Vector(2000, 1500);
+            //forests[2] = tri;
 
-             tri = new Triangle();
-            tri.p1 = new Vector(3500, 1000);
-            tri.p2 = new Vector(3500, 3000);
-            tri.p3 = new Vector(2500, 2000);
-            forests[3] = tri;
+            // tri = new Triangle();
+            //tri.p1 = new Vector(3500, 1000);
+            //tri.p2 = new Vector(3500, 3000);
+            //tri.p3 = new Vector(2500, 2000);
+            //forests[3] = tri;
+
+            //int wid = (int)Width;
+            //int hei = (int)Height;
+            //forestarray = new bool[wid, hei];
+            //Vector ppos = new Vector();
+            //for(int x = 0;x < wid;x++)
+            //{
+            //    for(int y = 0;y < hei;y++)
+            //    {
+            //        ppos.x = x;
+            //        ppos.y = y;
+            //        forestarray[x, y] = forests[0].Include(ppos) || forests[1].Include(ppos) || forests[2].Include(ppos) || forests[3].Include(ppos);
+            //    }
+            //}
         }
 
         public void MakeMove(Move m, int steps)
@@ -2368,7 +2534,7 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
         public bool TestCollide(MyCircularUnit unit)
         {
             Vector npos = unit.pos;
-            bool collide = false;
+            //bool collide = false;
             int xcol = (int)(npos.x / cstep);
             int ycol = (int)(npos.y / cstep);
             if (npos.x <= unit.radius)
@@ -2388,11 +2554,16 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                 return true;
             }
 
-            for(int i = 0;i < forests.Length;i++)
-            {
-                if (forests[i].Include(unit.pos))
-                    return true;
-            }
+            //if(forestarray[(int)unit.pos.x,(int)unit.pos.y])
+            //{
+            //    return true;
+            //}
+
+            //for(int i = 0;i < forests.Length;i++)
+            //{
+            //    if (forests[i].Include(unit.pos))
+            //        return true;
+            //}
 
             List<MyCircularUnit> cols;
 
@@ -2503,6 +2674,179 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
             return false;
         }
 
+        public bool TestMoveCollide(MyCircularUnit unit, Vector to)
+        {
+            Vector pos = unit.pos;
+            //bool collide = false;
+            int xcol = (int)(pos.x / cstep);
+            int ycol = (int)(pos.y / cstep);
+            if (to.x <= unit.radius)
+            {
+                return true;
+            }
+            else if (to.x >= w.Width - unit.radius)
+            {
+                return true;
+            }
+            if (to.y <= unit.radius)
+            {
+                return true;
+            }
+            else if (to.y >= w.Height - unit.radius)
+            {
+                return true;
+            }
+
+            //if(forestarray[(int)unit.pos.x,(int)unit.pos.y])
+            //{
+            //    return true;
+            //}
+
+            //for(int i = 0;i < forests.Length;i++)
+            //{
+            //    if (forests[i].Include(unit.pos))
+            //        return true;
+            //}
+
+            List<MyCircularUnit> cols;
+
+            cols = collidebox[xcol, ycol];
+            for (int k = 0; k < cols.Count; k++)
+            {
+                if (MoveCollide(pos,to,unit.radius, cols[k]))
+                {
+                    return true;
+                }
+            }
+
+
+            if (xcol > 0)
+            {
+                cols = collidebox[xcol - 1, ycol];
+                for (int k = 0; k < cols.Count; k++)
+                {
+                    if (MoveCollide(pos, to, unit.radius, cols[k]))
+                    {
+                        return true;
+                    }
+                }
+
+                if (ycol > 0)
+                {
+                    cols = collidebox[xcol - 1, ycol - 1];
+                    for (int k = 0; k < cols.Count; k++)
+                    {
+                        if (MoveCollide(pos, to, unit.radius, cols[k]))
+                        {
+                            return true;
+                        }
+                    }
+                }
+                if (ycol < cwidth - 1)
+                {
+                    cols = collidebox[xcol - 1, ycol + 1];
+                    for (int k = 0; k < cols.Count; k++)
+                    {
+                        if (MoveCollide(pos, to, unit.radius, cols[k]))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            if (xcol < cwidth - 1)
+            {
+                cols = collidebox[xcol + 1, ycol];
+                for (int k = 0; k < cols.Count; k++)
+                {
+                    if (MoveCollide(pos, to, unit.radius, cols[k]))
+                    {
+                        return true;
+                    }
+                }
+
+                if (ycol > 0)
+                {
+                    cols = collidebox[xcol + 1, ycol - 1];
+                    for (int k = 0; k < cols.Count; k++)
+                    {
+                        if (MoveCollide(pos, to, unit.radius, cols[k]))
+                        {
+                            return true;
+                        }
+                    }
+                }
+                if (ycol < cheight - 1)
+                {
+                    cols = collidebox[xcol + 1, ycol + 1];
+                    for (int k = 0; k < cols.Count; k++)
+                    {
+                        if (MoveCollide(pos, to, unit.radius, cols[k]))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            if (ycol > 0)
+            {
+                cols = collidebox[xcol, ycol - 1];
+                for (int k = 0; k < cols.Count; k++)
+                {
+                    if (MoveCollide(pos, to, unit.radius, cols[k]))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            if (ycol < cheight - 1)
+            {
+                cols = collidebox[xcol, ycol + 1];
+                for (int k = 0; k < cols.Count; k++)
+                {
+                    if (MoveCollide(pos, to, unit.radius, cols[k]))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        bool MoveCollide(Vector from, Vector to, double radius, MyCircularUnit col)
+        {
+            //x = at + b
+            //y = ct + d
+            //r^2 = (x - x0)^2 + (y - y0)^2
+            //dr/dt = 0 = 2(x - x0)a + 2(y - y0)c
+            //t(aa+cc) + ba - x0b + cd - y0c = 0
+            //t = (x0b + y0c - ba - cd)/(aa+cc)
+
+            Vector dpos = to - from;
+            double t = (col.pos.x * dpos.x + col.pos.y * dpos.y - from.x * dpos.x - from.y * dpos.y) / dpos.Abs;
+            double r = Vector.Distance(col.pos, from + dpos * t);
+            if (t < 0)
+            {
+                return false;
+            }
+            else if (t > 1)
+            {
+                if (Vector.Distance(to, col.pos) <= (radius + col.radius))
+                    return true;
+                return false;
+            }
+            else
+            {
+                if (r <= (radius + col.radius))
+                    return true;
+                else return false;
+            }
+        }
+
         bool Collide(MyCircularUnit u1, MyCircularUnit u2)
         {
             if (Vector.Distance(u1.pos, u2.pos) <= (u1.radius + u2.radius))
@@ -2558,7 +2902,6 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
             //h = g(d - bc/a)
             Vector dt = p2 - p1;
             dt.Normalize();
-            double t = ((target.x - p1.x) * dt.x + (target.y - p1.y) * dt.y) / (dt.x * dt.x + dt.y * dt.y);
             if(Math.Abs(dt.x) < 1e-4)
             {
                 double f = 1;
