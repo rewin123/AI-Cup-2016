@@ -353,6 +353,8 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                 else
                 {
                     GoToAttakPath(world, self, game);
+                    absmove.changeWithEnemiesInCastRange = true;
+                    absmove.nextType = AbstractMoveType.StendUp;
                 }
             }
 
@@ -393,24 +395,26 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
             {
                 myline = LaneType.Middle;
                 filter = MidFilter;
-                attackpath = new Vector[5];
+                attackpath = new Vector[7];
                 attackpath[0] = new Vector(100, world.Height - 100);
-                attackpath[1] = new Vector(400, world.Height - 400);
-                attackpath[2] = new Vector(world.Width * 0.5, world.Height * 0.5);
-                attackpath[3] = new Vector(world.Width - 400, 400);
-                attackpath[4] = new Vector(world.Width - 200, 200);
+                attackpath[1] = new Vector(800, world.Height - 800);
+                attackpath[2] = new Vector(world.Width * 0.25, world.Height * 0.75);
+                attackpath[3] = new Vector(world.Width * 0.5, world.Height * 0.5);
+                attackpath[4] = new Vector(world.Width * 0.75, world.Height * 0.25);
+                attackpath[5] = new Vector(world.Width - 800, 800);
+                attackpath[6] = new Vector(world.Width - 200, 200);
 
                 absmove = new AbstractMove();
-                absmove.type = AbstractMoveType.GoTo;
+                absmove.type = AbstractMoveType.StendUp;
 
-                MyCircularUnit unit = new MyCircularUnit(self);
-                //unit.radius += 2;
-                path = FindPath(new Vector(self.X, self.Y), attackpath[2], new MyWorld(world, self), 12, unit);
-                absmove.target = attackpath[2];
-                absmove.type = AbstractMoveType.GoTo;
-                absmove.changeWithEnemiesInCastRange = true;
-                absmove.nextType = AbstractMoveType.StendUp;
-                pospath = 0;
+                //MyCircularUnit unit = new MyCircularUnit(self);
+                ////unit.radius += 2;
+                //path = FindPath(new Vector(self.X, self.Y), attackpath[2], new MyWorld(world, self), 12, unit);
+                //absmove.target = attackpath[2];
+                //absmove.type = AbstractMoveType.GoTo;
+                //absmove.changeWithEnemiesInCastRange = true;
+                //absmove.nextType = AbstractMoveType.StendUp;
+                //pospath = 0;
             }
             else if(mincount == topcount)
             {
@@ -425,17 +429,17 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                 attackpath[5] = new Vector(world.Width - 200, 200);
 
                 absmove = new AbstractMove();
-                absmove.type = AbstractMoveType.GoTo;
-                absmove.target = attackpath[3];
+                absmove.type = AbstractMoveType.StendUp;
+                //absmove.target = attackpath[3];
 
-                MyCircularUnit unit = new MyCircularUnit(self);
-                //unit.radius += 2;
-                path = FindPath(new Vector(self.X, self.Y), attackpath[3], new MyWorld(world, self), 12, unit);
-                absmove.target = attackpath[3];
-                absmove.type = AbstractMoveType.GoTo;
-                absmove.changeWithEnemiesInCastRange = true;
-                absmove.nextType = AbstractMoveType.StendUp;
-                pospath = 0;
+                //MyCircularUnit unit = new MyCircularUnit(self);
+                ////unit.radius += 2;
+                //path = FindPath(new Vector(self.X, self.Y), attackpath[3], new MyWorld(world, self), 12, unit);
+                //absmove.target = attackpath[3];
+                //absmove.type = AbstractMoveType.GoTo;
+                //absmove.changeWithEnemiesInCastRange = true;
+                //absmove.nextType = AbstractMoveType.StendUp;
+                //pospath = 0;
             }
             else
             {
@@ -450,17 +454,17 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                 attackpath[5] = new Vector(world.Width - 200, 200);
 
                 absmove = new AbstractMove();
-                absmove.type = AbstractMoveType.GoTo;
-                absmove.target = attackpath[3];
+                absmove.type = AbstractMoveType.StendUp;
+                //absmove.target = attackpath[3];
 
-                MyCircularUnit unit = new MyCircularUnit(self);
-                //unit.radius += 2;
-                path = FindPath(new Vector(self.X, self.Y), attackpath[3], new MyWorld(world, self), 12, unit);
-                absmove.target = attackpath[3];
-                absmove.type = AbstractMoveType.GoTo;
-                absmove.changeWithEnemiesInCastRange = true;
-                absmove.nextType = AbstractMoveType.StendUp;
-                pospath = 0;
+                //MyCircularUnit unit = new MyCircularUnit(self);
+                ////unit.radius += 2;
+                //path = FindPath(new Vector(self.X, self.Y), attackpath[3], new MyWorld(world, self), 12, unit);
+                //absmove.target = attackpath[3];
+                //absmove.type = AbstractMoveType.GoTo;
+                //absmove.changeWithEnemiesInCastRange = true;
+                //absmove.nextType = AbstractMoveType.StendUp;
+                //pospath = 0;
             }
             
         }
@@ -1386,6 +1390,10 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
         }
         Vector[] FindPath(Vector from, Vector to, MyWorld world, double step, MyCircularUnit unit)
         {
+            unit.pos = to * 1;
+            if (world.TestCollide(unit))
+                return new Vector[] { to };
+
             int xsteps = (int)(world.Width / step) + 1;
             int ysteps = (int)(world.Height / step) + 1;
             int[,] waveMap = new int[xsteps, ysteps];
