@@ -129,6 +129,27 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                     path = RunOut(new Vector(self.X, self.Y), enemyFaction, new MyWorld(world, self), 9, unit, (int)game.WizardCastRange);
                     if (path.Length <= 1)
                     {
+                        Vector selfpos = new Vector(self.X, self.Y);
+                        Vector v = new Vector();
+                        Vector dr = new Vector();
+                        for(int i = 0;i < world.Minions.Length;i++)
+                        {
+                            if(world.Minions[i].Faction == enemyFaction)
+                            {
+                                dr.x = selfpos.x - world.Minions[i].X;
+                                dr.y = selfpos.y - world.Minions[i].Y;
+                                dr.Subdivide(dr.Abs2);
+                                v.x += dr.x;
+                                v.y += dr.y;
+                            }
+                        }
+
+                        v.Normalize();
+                        v.Multiply(10);
+                        Vector forward = Vector.Forward(self);
+                        Vector left = new Vector(forward.y, -forward.x);
+                        move.Speed = forward * v;
+                        move.StrafeSpeed = left * v;
                         absmove.type = AbstractMoveType.StendUp;
                     }
                     else
@@ -371,7 +392,7 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
             {
                 if (wizards[i].Faction != enemyFaction)
                 {
-                    if (wizards[i].X > 800 || wizards[i].Y < world.Height - 800)
+                    if (wizards[i].X > 600 || wizards[i].Y < world.Height - 600)
                     {
                         if (TopFilter(new Vector(wizards[i].X, wizards[i].Y), ref world))
                         {
@@ -391,32 +412,8 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
 
 
             int mincount = Math.Min(topcount, Math.Min(midcount, botcount));
-            if(mincount == midcount)
-            {
-                myline = LaneType.Middle;
-                filter = MidFilter;
-                attackpath = new Vector[7];
-                attackpath[0] = new Vector(100, world.Height - 100);
-                attackpath[1] = new Vector(800, world.Height - 800);
-                attackpath[2] = new Vector(world.Width * 0.25, world.Height * 0.75);
-                attackpath[3] = new Vector(world.Width * 0.5, world.Height * 0.5);
-                attackpath[4] = new Vector(world.Width * 0.75, world.Height * 0.25);
-                attackpath[5] = new Vector(world.Width - 800, 800);
-                attackpath[6] = new Vector(world.Width - 200, 200);
-
-                absmove = new AbstractMove();
-                absmove.type = AbstractMoveType.StendUp;
-
-                //MyCircularUnit unit = new MyCircularUnit(self);
-                ////unit.radius += 2;
-                //path = FindPath(new Vector(self.X, self.Y), attackpath[2], new MyWorld(world, self), 12, unit);
-                //absmove.target = attackpath[2];
-                //absmove.type = AbstractMoveType.GoTo;
-                //absmove.changeWithEnemiesInCastRange = true;
-                //absmove.nextType = AbstractMoveType.StendUp;
-                //pospath = 0;
-            }
-            else if(mincount == topcount)
+            
+            if(mincount == topcount)
             {
                 myline = LaneType.Top;
                 filter = TopFilter;
@@ -436,6 +433,31 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                 ////unit.radius += 2;
                 //path = FindPath(new Vector(self.X, self.Y), attackpath[3], new MyWorld(world, self), 12, unit);
                 //absmove.target = attackpath[3];
+                //absmove.type = AbstractMoveType.GoTo;
+                //absmove.changeWithEnemiesInCastRange = true;
+                //absmove.nextType = AbstractMoveType.StendUp;
+                //pospath = 0;
+            }
+            else if (mincount == midcount)
+            {
+                myline = LaneType.Middle;
+                filter = MidFilter;
+                attackpath = new Vector[7];
+                attackpath[0] = new Vector(100, world.Height - 100);
+                attackpath[1] = new Vector(800, world.Height - 800);
+                attackpath[2] = new Vector(world.Width * 0.25, world.Height * 0.75);
+                attackpath[3] = new Vector(world.Width * 0.5, world.Height * 0.5);
+                attackpath[4] = new Vector(world.Width * 0.75, world.Height * 0.25);
+                attackpath[5] = new Vector(world.Width - 800, 800);
+                attackpath[6] = new Vector(world.Width - 200, 200);
+
+                absmove = new AbstractMove();
+                absmove.type = AbstractMoveType.StendUp;
+
+                //MyCircularUnit unit = new MyCircularUnit(self);
+                ////unit.radius += 2;
+                //path = FindPath(new Vector(self.X, self.Y), attackpath[2], new MyWorld(world, self), 12, unit);
+                //absmove.target = attackpath[2];
                 //absmove.type = AbstractMoveType.GoTo;
                 //absmove.changeWithEnemiesInCastRange = true;
                 //absmove.nextType = AbstractMoveType.StendUp;
@@ -481,7 +503,8 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
 
         bool MidFilter(Vector pos, ref World world)
         {
-            return Math.Abs(pos.x - pos.y) < 400;
+            //y = height - x
+            return Math.Abs(pos.x + pos.y - world.Height) < 400;
         }
 
         void GoToAttakPath(World world, Wizard self, Game game)
@@ -489,12 +512,22 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
             int attackpathIndx = AttackPathIndex( self);
 
             if (attackpathIndx < attackpath.Length - 1)
+            {
                 attackpathIndx++;
 
-            absmove.type = AbstractMoveType.GoTo;
-            absmove.target = attackpath[attackpathIndx];
-            path = FindPath(new Vector(self.X, self.Y), attackpath[attackpathIndx], new MyWorld(world, self), 9, new MyCircularUnit(self));
-            pospath = 0;
+                absmove.type = AbstractMoveType.GoTo;
+                absmove.target = attackpath[attackpathIndx];
+                path = FindPath(new Vector(self.X, self.Y), attackpath[attackpathIndx], new MyWorld(world, self), 9, new MyCircularUnit(self));
+                pospath = 0;
+            }
+            else
+            {
+
+                absmove.type = AbstractMoveType.GoTo;
+                absmove.target = attackpath[attackpathIndx];
+                path = FindPath(new Vector(self.X, self.Y), new Vector(world.Width,0), new MyWorld(world, self), 9, new MyCircularUnit(self));
+                pospath = 0;
+            }
         }
 
         int AttackPathIndex( Unit self)
@@ -1408,12 +1441,14 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
             int dxsteps = xsteps - 1;
             int dysteps = ysteps - 1;
             int interacions = 0;
+            int waitState = 0;
             Vector ppos = new Vector();
             do
             {
                 interacions = 0;
                 world.MakeMove(new Move(), (int)(step / 3));
-                int stage2 = stage + 1;
+                int stage2 = stage + 2;
+                int stage3 = stage + 3;
                 for(int x = 0;x < xsteps;x++)
                 {
                     for(int y = 0;y < ysteps;y++)
@@ -1434,6 +1469,33 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                                         waveMap[x - 1, y] = stage2;
                                     }
                                 }
+
+                                if (y > 0)
+                                {
+                                    if(waveMap[x - 1,y - 1] == 0)
+                                    {
+                                        ppos.x = (x - 1) * step + dx;
+                                        ppos.y = (y - 1) * step + dy;
+                                        if (!world.TestMoveCollide(unit, ppos))
+                                        {
+                                            interacions++;
+                                            waveMap[x - 1, y - 1] = stage3;
+                                        }
+                                    }
+                                }
+                                if (y < dysteps)
+                                {
+                                    if (waveMap[x - 1, y + 1] == 0)
+                                    {
+                                        ppos.x = (x - 1) * step + dx;
+                                        ppos.y = (y + 1) * step + dy;
+                                        if (!world.TestMoveCollide(unit, ppos))
+                                        {
+                                            interacions++;
+                                            waveMap[x - 1, y + 1] = stage3;
+                                        }
+                                    }
+                                }
                             }
                             if (x < dxsteps)
                             {
@@ -1445,6 +1507,33 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                                     {
                                         interacions++;
                                         waveMap[x + 1, y] = stage2;
+                                    }
+                                }
+
+                                if (y > 0)
+                                {
+                                    if (waveMap[x + 1, y - 1] == 0)
+                                    {
+                                        ppos.x = (x + 1) * step + dx;
+                                        ppos.y = (y - 1) * step + dy;
+                                        if (!world.TestMoveCollide(unit, ppos))
+                                        {
+                                            interacions++;
+                                            waveMap[x + 1, y - 1] = stage3;
+                                        }
+                                    }
+                                }
+                                if (y < dysteps)
+                                {
+                                    if (waveMap[x + 1, y + 1] == 0)
+                                    {
+                                        ppos.x = (x + 1) * step + dx;
+                                        ppos.y = (y + 1) * step + dy;
+                                        if (!world.TestMoveCollide(unit, ppos))
+                                        {
+                                            interacions++;
+                                            waveMap[x + 1, y + 1] = stage3;
+                                        }
                                     }
                                 }
                             }
@@ -1483,61 +1572,120 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                         }
                     }
                 }
-                stage = stage2;
-            } while (waveMap[xend, yend] == 0 && interacions > 0);
-            if(interacions == 0)
+                stage++;
+                if (interacions == 0)
+                    waitState++;
+                else waitState = 0;
+            } while (waveMap[xend, yend] == 0 && waitState < 6);
+            if(waitState == 6)
             {
                 return new Vector[] { to };
             }
 
-            Vector[] path = new Vector[waveMap[xend, yend]];
-            if(path.Length == 1)
-            {
-                path[0] = new Vector(xend * step + dx, yend * step + dy);
-                return path;
-            }
+            List<Vector> path = new List<Vector>();
+            //if(path.Length == 1)
+            //{
+            //    path[0] = new Vector(xend * step + dx, yend * step + dy);
+            //    return path;
+            //}
             int xnow = xend;
             int ynow = yend;
             do
             {
-                int dval = waveMap[xnow,ynow] - 1;
-                path[dval] = new Vector(xnow * step + dx, ynow * step + dy);
+                int dval = waveMap[xnow,ynow];
+                path.Add(new Vector(xnow * step + dx, ynow * step + dy));
+                int xnew = xnow;
+                int ynew = ynow;
+                int val;
                 if(xnow > 0)
                 {
-                    if(waveMap[xnow - 1,ynow] == dval)
+                    val = waveMap[xnow - 1, ynow];
+                    if(val < dval && val != 0)
                     {
-                        xnow--;
-                        continue;
+                        dval = waveMap[xnow - 1, ynow];
+                        xnew = xnow - 1;
+                        ynew = ynow;
+                    }
+
+                    if (ynow > 0)
+                    {
+                        val = waveMap[xnow - 1, ynow - 1];
+                        if (val < dval && val != 0)
+                        {
+                            dval = val;
+                            xnew = xnow - 1;
+                            ynew = ynow - 1;
+                        }
+                    }
+                    if (ynow < dysteps)
+                    {
+                        val = waveMap[xnow - 1, ynow + 1];
+                        if (val < dval && val != 0)
+                        {
+                            dval = val;
+                            xnew = xnow - 1;
+                            ynew = ynow + 1;
+                        }
                     }
                 }
                 if(xnow < dxsteps)
                 {
-                    if(waveMap[xnow + 1,ynow] == dval)
+                    val = waveMap[xnow + 1, ynow];
+                    if (val < dval && val != 0)
                     {
-                        xnow++;
-                        continue;
+                        dval = waveMap[xnow + 1, ynow];
+                        xnew = xnow + 1;
+                        ynew = ynow;
+                    }
+
+                    if (ynow > 0)
+                    {
+                        val = waveMap[xnow + 1, ynow - 1];
+                        if (val < dval && val != 0)
+                        {
+                            dval = val;
+                            xnew = xnow + 1;
+                            ynew = ynow - 1;
+                        }
+                    }
+                    if (ynow < dysteps)
+                    {
+                        val = waveMap[xnow + 1, ynow + 1];
+                        if (val < dval && val != 0)
+                        {
+                            dval = val;
+                            xnew = xnow + 1;
+                            ynew = ynow + 1;
+                        }
                     }
                 }
                 if (ynow > 0)
                 {
-                    if (waveMap[xnow, ynow - 1] == dval)
+                    val = waveMap[xnow, ynow - 1];
+                    if (val < dval && val != 0)
                     {
-                        ynow--;
-                        continue;
+                        dval = waveMap[xnow, ynow - 1];
+                        xnew = xnow;
+                        ynew = ynow - 1;
                     }
                 }
                 if (ynow < dysteps)
                 {
-                    if (waveMap[xnow, ynow + 1] == dval)
+                    val = waveMap[xnow, ynow + 1];
+                    if (val < dval && val != 0)
                     {
-                        ynow++;
-                        continue;
+                        dval = waveMap[xnow, ynow + 1];
+                        xnew = xnow;
+                        ynew = ynow + 1;
                     }
                 }
+                xnow = xnew;
+                ynow = ynew;
             } while (xnow != xstart || ynow != ystart);
-            path[0] = new Vector(xstart * step + dx, ystart * step + dy);
+            path.Add(new Vector(xstart * step + dx, ystart * step + dy));
+            path.Reverse();
 
-            return path;
+            return path.ToArray();
         }
 
         Vector[] FindPathDir(Vector from, Vector to, MyWorld world, double step, MyCircularUnit unit, double angle)
