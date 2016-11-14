@@ -67,39 +67,27 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                 absmove.type = AbstractMoveType.GoTo;
                 path = RunOut(new Vector(self.X, self.Y), enemyFaction, new MyWorld(world,self), 9, new MyCircularUnit(self), (int)game.WizardCastRange);
             }
-            //if (attackpath == null)
-            //{
-            //    if (self.Faction == Faction.Academy)
-            //        enemyFaction = Faction.Renegades;
-            //    else enemyFaction = Faction.Academy;
-
-            //    attackpath = new Vector[6];
-            //    attackpath[0] = new Vector(100, world.Height - 100);
-            //    attackpath[1] = new Vector(100, world.Height - 800);
-            //    attackpath[2] = new Vector(100, world.Height * 0.5);
-            //    attackpath[3] = new Vector(200, 400);
-            //    attackpath[4] = new Vector(world.Width * 0.5, 200);
-            //    attackpath[5] = new Vector(world.Width - 200, 200);
-
-            //    absmove = new AbstractMove();
-            //    absmove.type = AbstractMoveType.GoTo;
-            //    absmove.target = attackpath[3];
-
-            //    MyCircularUnit unit = new MyCircularUnit(self);
-            //    //unit.radius += 2;
-            //    path = FindPath(new Vector(self.X, self.Y), attackpath[3], new MyWorld(world, self), 12, unit);
-            //    absmove.target = attackpath[3];
-            //    absmove.type = AbstractMoveType.GoTo;
-            //    //DrawVectorPath(path, (int)350, new Vector(self.X - 150,self.Y - 150), world,unit);
-            //    filter = TopFilter;
-            //}
+            
             if (absmove.changeWithEnemiesInCastRange)
             {
                 double dist = MinRangeFromFaction(new Vector(self.X, self.Y), new MyWorld(world,self), enemyFaction);
                 if(dist <= game.WizardCastRange)
                 {
-                    absmove.type = absmove.nextType;
-                    absmove.changeWithEnemiesInCastRange = false;
+                    absmove.GoNext();
+                }
+            }
+            if(absmove.changeIfINotNearest)
+            {
+                if(!NearestI(world,self,game))
+                {
+                    absmove.GoNext();
+                }
+            }
+            if(absmove.changeEnemyInRange)
+            {
+                if(MinRangeFromFaction(new Vector(self.X,self.Y),new MyWorld(world,self),enemyFaction) <= absmove.val)
+                {
+                    absmove.GoNext();
                 }
             }
             if (absmove.type == AbstractMoveType.GoTo)
@@ -156,6 +144,8 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                     {
                         pospath = 0;
                         absmove.target = path[path.Length - 1];
+                        absmove.changeIfINotNearest = true;
+                        absmove.nextType = AbstractMoveType.StendUp;
                     }
                 }
                 else if (prevpos.x == self.X && prevpos.y == self.Y)
@@ -276,9 +266,11 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                         absmove.type = AbstractMoveType.GoTo;
                         MyCircularUnit unit = new MyCircularUnit(self);
                         //unit.radius += 2;
-                        path = RunOut(new Vector(self.X, self.Y), enemyFaction, new MyWorld(world, self), 9, unit, (int)game.MinionVisionRange);
+                        path = RunOut(new Vector(self.X, self.Y), enemyFaction, new MyWorld(world, self), 9, unit, (int)(game.MinionVisionRange * 0.5));
                         pospath = 0;
                         absmove.target = path[path.Length - 1];
+                        absmove.changeIfINotNearest = true;
+                        absmove.nextType = AbstractMoveType.StendUp;
                     }
                     else
                     {
@@ -355,8 +347,8 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
                             {
                                 absmove.type = AbstractMoveType.GoTo;
                                 MyCircularUnit unit = new MyCircularUnit(self);
-                                unit.radius += 2;
-                                path = RunIn(new Vector(self.X, self.Y), enemyFaction, new MyWorld(world, self), 9, unit, (int)game.WizardCastRange);
+                                //unit.radius += 2;
+                                path = RunIn(new Vector(self.X, self.Y), enemyFaction, new MyWorld(world, self), 9, unit, (int)(game.WizardCastRange * 0.75));
                                 pospath = 0;
                                 absmove.target = path[path.Length - 1];
                                 absmove.changeWithEnemiesInCastRange = true;
@@ -1877,7 +1869,19 @@ namespace Com.CodeGame.CodeWizards2016.DevKit.CSharpCgdk {
         public Vector target;
         public long IdTarget;
         public bool changeWithEnemiesInCastRange = false;
+        public bool changeIfINotNearest = false;
         public AbstractMoveType nextType;
+        public double val;
+        public bool changeEnemyInRange = false;
+
+        public void GoNext()
+        {
+            type = nextType;
+            changeEnemyInRange = false;
+            changeIfINotNearest = false;
+            changeWithEnemiesInCastRange = false;
+        }
+
     }
 
     class Cell
